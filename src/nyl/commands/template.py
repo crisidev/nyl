@@ -218,7 +218,6 @@ def template(
         if inline:
 
             def new_generation(manifest: Manifest) -> Manifests:
-                breakpoint()
                 manifests = template_engine.evaluate(Manifests([manifest]))
                 populate_namespace_to_resources(manifests, current_default_namespace)
                 return manifests
