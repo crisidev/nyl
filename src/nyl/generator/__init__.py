@@ -37,7 +37,7 @@ class Generator(ABC, Generic[T]):
 def reconcile_generator(
     generator: Generator[Manifest],
     manifests: Manifests,
-    on_generated: Callable[[Manifest], Manifests],
+    new_generation_callback: Callable[[Manifest], Manifests],
     skip_resources: Sequence[type[NylResource]] = (),
 ) -> Manifests:
     """
@@ -70,7 +70,7 @@ def reconcile_generator(
                 queue.append(resource)
             else:
                 for manifest in generator.generate(resource):
-                    queue.extend(on_generated(manifest))
+                    queue.extend(new_generation_callback(manifest))
             loops += 1
 
     return result

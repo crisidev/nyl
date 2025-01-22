@@ -210,12 +210,23 @@ def template(
     for source in load_manifests(paths):
         logger.opt(colors=True).info("Rendering manifests from <blue>{}</>.", source.file)
 
+        # Begin populating the default namespace to resources.
+        current_default_namespace = get_default_namespace_for_manifest(source, default_namespace)
+        populate_namespace_to_resources(source.manifests, current_default_namespace)
+
         source.manifests = template_engine.evaluate(source.manifests)
         if inline:
+
+            def new_generation(manifest: Manifest) -> Manifests:
+                breakpoint()
+                manifests = template_engine.evaluate(Manifests([manifest]))
+                populate_namespace_to_resources(manifests, current_default_namespace)
+                return manifests
+
             source.manifests = reconcile_generator(
                 generator,
                 source.manifests,
-                on_generated=lambda m: template_engine.evaluate(Manifests([m])),
+                new_generation_callback=new_generation,
                 skip_resources=[PostProcessor],
             )
 
@@ -242,7 +253,6 @@ def template(
                 applyset = ApplySet.load(manifest)
                 source.manifests.remove(manifest)
 
-        current_default_namespace = get_default_namespace_for_manifest(source, default_namespace)
         if not applyset and project.config.settings.generate_applysets:
             if not current_default_namespace:
                 logger.opt(colors=True).error(
